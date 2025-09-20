@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Know the Difference — 30 Disease Awareness Checker</title>
+<style>
+  /* ---------- Base / Theme ---------- */
+  :root{
+    --bg: #f3f8ff;
+    --card: #ffffff;
+    --muted: #65748b;
+    --accent-1: #3751ff;
+    --accent-2: #00c2ff;
+    --glass: rgba(255,255,255,0.6);
+    --danger: #d33;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    background: linear-gradient(180deg, #eef7ff 0%, #f9fcff 100%);
+    color:#0f1724;
+    -webkit-font-smoothing:antialiased;
+  }
+  header{
+    padding:22px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    background:linear-gradient(90deg,var(--accent-1),var(--accent-2));
+    color:white;
+    box-shadow: 0 6px 24px rgba(13,37,88,0.12);
+  }
+  header h1{margin:0;font-size:20px}
+  header p{margin:0;font-size:13px;opacity:.95}
+
+  .container{
+    max-width:1200px;
+    margin:22px auto;
+    padding:0 18px 60px 18px;
+  }
+
+  /* ---------- Grid of cards ---------- */
+  .grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:18px;
+    margin-top:18px;
+  }
+  .card {
+    background:var(--card);
+    border-radius:12px;
+    padding:16px;
+    box-shadow: 0 6px 18px rgba(13,37,88,0.06);
+    cursor:pointer;
+    transition:transform .22s, box-shadow .22s;
+    border:1px solid rgba(14,45,100,0.03);
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .card:hover{ transform:translateY(-6px); box-shadow:0 12px 30px rgba(13,37,88,0.10) }
+  .card h3{margin:0;color:var(--accent-1);font-size:16px}
+  .card p{margin:0;font-size:13px;color:var(--muted)}
+
+  /* ---------- Search / controls ---------- */
+  .controls {
+    display:flex;
+    gap:10px;
+    align-items:center;
+    margin-top:18px;
+  }
+  .search {
+    flex:1;
+    display:flex;
+    gap:8px;
+  }
+  .search input{
+    flex:1;padding:10px 12px;border-radius:10px;border:1px solid #e6f0ff;background:linear-gradient(180deg,#fff,#fbfdff);
+    font-size:14px;
+  }
+  .btn {
+    background:var(--accent-1);color:white;border:none;padding:10px 12px;border-radius:10px;cursor:pointer;font-weight:600;
+  }
+  .btn.ghost{background:transparent;color:var(--accent-1);border:1px solid rgba(55,81,255,0.12)}
+  .legend {color:var(--muted);font-size:13px;margin-top:10px}
+
+  /* ---------- Modal ---------- */
+  .modal {
+    position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:1200;
+    background:linear-gradient(rgba(3,10,34,0.45), rgba(3,10,34,0.45));
+  }
+  .modal.open{display:flex}
+  .modal-card{
+    width:96%;max-width:900px;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,0.95),#fff);
+    padding:18px;box-shadow:0 12px 40px rgba(2,6,23,0.3);position:relative;
+    display:grid;grid-template-columns:1fr 360px;gap:16px;
+  }
+  @media (max-width:940px){ .modal-card{grid-template-columns:1fr} }
+
+  .modal-left{overflow:auto;max-height:72vh;padding-right:6px}
+  .modal-right{border-left:1px dashed #eef6ff;padding-left:12px}
+  .small {font-size:13px;color:var(--muted)}
+  .section-title{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .section-title h2{margin:0;font-size:16px;color:var(--accent-1)}
+
+  .sym-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-top:12px}
+  label.sym {
+    display:flex;gap:8px;align-items:center;background:#fbfdff;padding:10px;border-radius:8px;border:1px solid #eef6ff;cursor:pointer;
+  }
+  .actions{display:flex;gap:8px;align-items:center;margin-top:14px}
+  .result-box{background:linear-gradient(180deg,#fcfffb,#ffffff);border-radius:10px;padding:12px;border:1px solid #eefaf2}
+
+  /* ---------- Warning (blinking) ---------- */
+  .warning {
+    background:linear-gradient(90deg,#fff1f0,#ffe6e6);
+    border:1px solid rgba(220,20,60,0.12);
+    color:#7a0910;padding:12px;border-radius:8px;font-weight:700;text-align:center;margin-top:10px;
+    animation: warnBlink 1.2s infinite;
+  }
+  @keyframes warnBlink {
+    0% { box-shadow: 0 0 0 rgba(255,0,0,0); }
+    50% { box-shadow: 0 0 18px rgba(255,0,0,0.15); transform:translateY(-1px); }
+    100% { box-shadow: 0 0 0 rgba(255,0,0,0); transform:none; }
+  }
+
+  /* ---------- Footer ---------- */
+  footer{
+    margin-top:28px;background:linear-gradient(90deg,var(--accent-1),var(--accent-2));color:white;padding:18px;border-radius:10px;
+    max-width:1200px;margin-left:auto;margin-right:auto;margin-bottom:40px;
+  }
+  .muted-small{color:var(--muted);font-size:13px}
+
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Know the Difference — 30 Disease Awareness Checker</h1>
+    <p>Click the disease you think you have → enter symptoms → get likely actual condition(s), confirmation hints, care & warnings.</p>
+  </div>
+  <div style="text-align:right">
+    <div style="font-size:13px">Educational only • Not a diagnostic tool</div>
+  </div>
+</header>
+
+<div class="container">
+  <div class="controls">
+    <div class="search">
+      <input id="search" placeholder="Search disease (e.g., Dengue, Migraine, Heart Attack)"/>
+      <button class="btn ghost" id="clear">Clear</button>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="btn" id="showAll">Show All</button>
+    </div>
+  </div>
+
+  <div class="legend">Tap a card to choose the disease you <strong>think</strong> you have. The tool will ask symptoms and then predict the actual likely condition(s).</div>
+
+  <div class="grid" id="grid"></div>
+</div>
+
+<!-- Modal -->
+<div class="modal" id="modal">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-left">
+      <div class="section-title">
+        <h2 id="modalTitle">Disease</h2>
+        <div class="small" id="modalPair">Pair hint</div>
+      </div>
+      <p id="modalSummary" class="small" style="margin-top:8px"></p>
+
+      <div style="margin-top:12px">
+        <div style="font-weight:700">Select symptoms you are experiencing</div>
+        <div class="sym-grid" id="symGrid"></div>
+      </div>
+
+      <div class="actions">
+        <button class="btn" id="analyzeBtn">Analyze</button>
+        <button class="btn ghost" id="resetBtn">Reset</button>
+        <button class="btn ghost" id="closeBtn" style="margin-left:auto">Close</button>
+      </div>
+
+      <div id="analysisArea" style="margin-top:12px"></div>
+    </div>
+
+    <div class="modal-right">
+      <div class="section-title"><h3 style="margin:0">Quick Info</h3></div>
+      <div style="margin-top:10px" id="infoBox" class="small"></div>
+
+      <div style="margin-top:14px">
+        <div style="font-weight:700">When to confirm 100%</div>
+        <div id="confirmBox" class="muted-small" style="margin-top:8px"></div>
+      </div>
+
+      <div style="margin-top:14px">
+        <div style="font-weight:700">Immediate care</div>
+        <div id="immediateBox" class="muted-small" style="margin-top:8px"></div>
+      </div>
+
+      <div style="margin-top:14px">
+        <div style="font-weight:700">Temporary / OTC suggestions</div>
+        <div id="tempMedBox" class="muted-small" style="margin-top:8px"></div>
+      </div>
+
+      <div style="margin-top:14px">
+        <div style="font-weight:700">Consequences if mistaken</div>
+        <div id="conseqBox" class="muted-small" style="margin-top:8px"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+    <div>Created by <strong>[Your Name]</strong> — B.Tech Student</div>
+    <div style="max-width:700px" class="muted-small">This tool provides educational awareness, not a diagnosis. If symptoms are severe or life-threatening, seek emergency care immediately.</div>
+  </div>
+</footer>
+
+<script>
+/* ----------------- Data: 30 diseases -----------------
+Each object:
+id, title, pair, summary, symptoms[], confirm_criteria[], treatment, immediate_care, temp_meds[], consequences_if_misdiagnosed[], critical (bool)
+*/
+const diseases = [
+  { id:'cold', title:'Common Cold', pair:'Cold ⇄ Flu', summary:'Mild viral infection—sneezing, runny nose, sore throat.', symptoms:['sneezing','runny nose','sore throat','low fever','mild cough','mild fatigue'], confirm_criteria:['sneezing','runny nose'], treatment:'Rest, fluids, symptomatic care; decongestants for congestion.', immediate_care:'If breathing difficulty or high fever develops, see clinician.', temp_meds:['Paracetamol for fever/pain','Saline nasal spray'], consequences_if_misdiagnosed:['Missing influenza; delayed antiviral care for flu'], critical:false },
+  { id:'flu', title:'Influenza (Flu)', pair:'Flu ⇄ Cold', summary:'Sudden high fever, body aches, severe fatigue; more systemic than cold.', symptoms:['high fever','body aches','chills','severe fatigue','headache','dry cough'], confirm_criteria:['high fever','body aches'], treatment:'Supportive care; antivirals under clinician if early.', immediate_care:'Severe breathing difficulty or chest pain—seek urgent care.', temp_meds:['Paracetamol','Oral rehydration'], consequences_if_misdiagnosed:['Missed antiviral window; risk of pneumonia'], critical:true },
+
+  { id:'migraine', title:'Migraine', pair:'Migraine ⇄ Sinus Headache', summary:'Throbbing unilateral headache, nausea, light/sound sensitivity.', symptoms:['throbbing head pain','one-sided pain','nausea','light sensitivity','sound sensitivity'], confirm_criteria:['one-sided pain','nausea'], treatment:'Rest in dark room; triptans/NSAIDs as prescribed.', immediate_care:'Sudden neurological signs (weakness, vision loss) require emergency.', temp_meds:['Ibuprofen (if appropriate)','Antiemetic per clinician'], consequences_if_misdiagnosed:['Unnecessary antibiotics; chronic untreated migraine'], critical:false },
+  { id:'sinus', title:'Sinus Headache (Sinusitis)', pair:'Sinus ⇄ Migraine', summary:'Facial pressure, nasal congestion, worse on bending forward.', symptoms:['facial pressure','nasal congestion','worse bending forward','thick nasal discharge','low-grade fever'], confirm_criteria:['facial pressure','nasal congestion'], treatment:'Nasal saline, decongestants; antibiotics if bacterial.', immediate_care:'Severe facial swelling or vision changes—urgent.', temp_meds:['Nasal saline','Short-term oral decongestant'], consequences_if_misdiagnosed:['Unnecessary migraine meds; missed bacterial infection'], critical:false },
+
+  { id:'heartburn', title:'Heartburn (GERD)', pair:'Heartburn ⇄ Heart Attack', summary:'Burning chest discomfort often after meals; improves with antacids.', symptoms:['burning chest','after meals','improves with antacids','acid regurgitation'], confirm_criteria:['after meals','improves with antacids'], treatment:'Antacids, lifestyle changes, PPI when needed.', immediate_care:'Crushing chest pain or faintness — treat as possible heart attack.', temp_meds:['Antacid chewable'], consequences_if_misdiagnosed:['Missing myocardial infarction if labeled as reflux'], critical:false },
+  { id:'heart_attack', title:'Heart Attack (Myocardial Infarction)', pair:'Heart Attack ⇄ Heartburn', summary:'Crushing chest pain often radiating to arm/jaw with sweating and breathlessness.', symptoms:['crushing chest pain','radiates to arm/jaw','sweating','shortness of breath','faintness'], confirm_criteria:['crushing chest pain','radiates to arm/jaw'], treatment:'Emergency reperfusion and monitoring.', immediate_care:'Call emergency services immediately; chew aspirin if advised/available.', temp_meds:['Aspirin in emergency only (if appropriate)'], consequences_if_misdiagnosed:['Delay in reperfusion → death or major damage'], critical:true },
+
+  { id:'food_poison', title:'Food Poisoning (Bacterial)', pair:'Food Poisoning ⇄ Viral Gastroenteritis', summary:'Sudden vomiting/diarrhea after contaminated food.', symptoms:['sudden vomiting','diarrhea','abdominal cramps','after eating','fever','dehydration'], confirm_criteria:['sudden vomiting','after eating'], treatment:'Hydration (ORS); antibiotics if bacterial confirmed.', immediate_care:'Severe dehydration, bloody stools — urgent.', temp_meds:['ORS','Antiemetic per clinician'], consequences_if_misdiagnosed:['Missing severe bacterial infection; dehydration'], critical:false },
+  { id:'stomach_flu', title:'Viral Gastroenteritis (Stomach Flu)', pair:'Viral Gastroenteritis ⇄ Food Poisoning', summary:'Viral stomach infection causing vomiting, diarrhea, fever over days.', symptoms:['vomiting','diarrhea','fever','body aches','lasts days'], confirm_criteria:['fever','diarrhea'], treatment:'Fluids, rest; symptomatic care.', immediate_care:'Severe dehydration — seek care.', temp_meds:['ORS','Paracetamol'], consequences_if_misdiagnosed:['Delayed bacterial treatment if present'], critical:false },
+
+  { id:'anxiety', title:'Generalized Anxiety', pair:'Anxiety ⇄ Panic Attack', summary:'Persistent worry, restlessness, sleep disturbance.', symptoms:['worry','restlessness','sleep problems','fatigue','muscle tension'], confirm_criteria:['worry','restlessness'], treatment:'Therapy (CBT), lifestyle changes, medications if prescribed.', immediate_care:'If chest pain occurs, rule out cardiac causes.', temp_meds:['Breathing exercises, relaxation techniques'], consequences_if_misdiagnosed:['Missing physical causes or cardiac conditions'], critical:false },
+  { id:'panic', title:'Panic Attack', pair:'Panic Attack ⇄ Cardiac Event', summary:'Sudden intense fear with palpitations, chest tightness and dizziness.', symptoms:['sudden intense fear','palpitations','chest tightness','dizziness','tingling'], confirm_criteria:['sudden intense fear','palpitations'], treatment:'Grounding, breathing exercises, counselling.', immediate_care:'If chest pain is crushing or fainting—seek emergency.', temp_meds:['Grounding techniques; clinician-prescribed meds if frequent'], consequences_if_misdiagnosed:['Missing cardiac causes if presumed only panic'], critical:false },
+
+  { id:'asthma', title:'Asthma', pair:'Asthma ⇄ COPD', summary:'Wheezing and reversible breathlessness, often triggered by allergens.', symptoms:['wheezing','shortness of breath','chest tightness','cough','triggered by allergens/exercise'], confirm_criteria:['wheezing','shortness of breath'], treatment:'Inhaled bronchodilators and steroids per clinician.', immediate_care:'Severe breathlessness or blue lips — emergency.', temp_meds:['Short-acting bronchodilator inhaler (if prescribed)'], consequences_if_misdiagnosed:['Inadequate emergency treatment'], critical:true },
+  { id:'copd', title:'COPD (Chronic Bronchitis / Emphysema)', pair:'COPD ⇄ Asthma', summary:'Progressive breathlessness, chronic productive cough, often in smokers.', symptoms:['progressive shortness of breath','cough with sputum','exercise limitation','smoking history'], confirm_criteria:['cough with sputum','progressive shortness of breath'], treatment:'Smoking cessation, inhalers, rehab.', immediate_care:'Severe breathing difficulty — emergency.', temp_meds:['Short-acting bronchodilator (as prescribed)'], consequences_if_misdiagnosed:['Delayed smoking cessation advice; worsening lung function'], critical:true },
+
+  { id:'dengue', title:'Dengue Fever', pair:'Dengue ⇄ Typhoid / Malaria', summary:'High fever, severe joint pain, rash, bleeding risk from mosquitoes.', symptoms:['high fever','severe joint pain','rash','bleeding gums','headache','nausea'], confirm_criteria:['high fever','severe joint pain','rash'], treatment:'Supportive care, monitor platelets closely; avoid NSAIDs until excluded.', immediate_care:'Bleeding, severe abdominal pain — urgent.', temp_meds:['Paracetamol (avoid NSAIDs)'], consequences_if_misdiagnosed:['NSAID use increases bleeding risk; delayed monitoring leads to complications'], critical:true },
+  { id:'typhoid', title:'Typhoid (Enteric Fever)', pair:'Typhoid ⇄ Dengue', summary:'Sustained fever with abdominal pain; requires antibiotics when confirmed.', symptoms:['sustained fever','abdominal pain','constipation','diarrhea','headache'], confirm_criteria:['sustained fever','abdominal pain'], treatment:'Antibiotics after diagnosis.', immediate_care:'Severe abdominal pain or persistent high fever — urgent.', temp_meds:['Paracetamol','ORS'], consequences_if_misdiagnosed:['Delay in antibiotics may lead to intestinal perforation'], critical:true },
+
+  { id:'malaria', title:'Malaria', pair:'Malaria ⇄ Dengue', summary:'Cyclical fevers with chills and sweating; diagnosed by blood test.', symptoms:['fever with chills','sweating','headache','anemia','nausea'], confirm_criteria:['fever with chills','positive blood smear'], treatment:'Antimalarials per diagnosis.', immediate_care:'High fever, altered consciousness — urgent.', temp_meds:['Paracetamol','ORS'], consequences_if_misdiagnosed:['Delay in antimalarials → severe malaria'], critical:true },
+
+  { id:'covid', title:'COVID-19', pair:'COVID ⇄ Flu / Cold', summary:'Respiratory infection with fever, cough, loss of taste/smell possible.', symptoms:['fever','dry cough','loss of taste/smell','fatigue','shortness of breath'], confirm_criteria:['loss of taste/smell','positive test'], treatment:'Supportive care; antivirals/oxygen per clinician.', immediate_care:'Severe breathlessness — emergency.', temp_meds:['Paracetamol','ORS'], consequences_if_misdiagnosed:['Delayed isolation or treatment; spread to others'], critical:true },
+
+  { id:'pneumonia', title:'Pneumonia', pair:'Pneumonia ⇄ Bronchitis', summary:'Infection of lung tissue causing cough, fever and breathlessness.', symptoms:['fever','productive cough','shortness of breath','chest pain','sputum'], confirm_criteria:['fever','shortness of breath','chest crackles'], treatment:'Antibiotics if bacterial; supportive care.', immediate_care:'Severe breathlessness or high fever — urgent.', temp_meds:['Paracetamol','ORS'], consequences_if_misdiagnosed:['Delayed antibiotics → complications'], critical:true },
+  { id:'bronchitis', title:'Bronchitis', pair:'Bronchitis ⇄ Pneumonia', summary:'Irritation of bronchial tubes causing cough with mucus; often post-cold.', symptoms:['cough with mucus','mild fever','wheeze','chest discomfort'], confirm_criteria:['cough with mucus'], treatment:'Rest, fluids; antibiotics only if bacterial.', immediate_care:'If worse breathing or high fever — seek care.', temp_meds:['Expectorants, paracetamol'], consequences_if_misdiagnosed:['Missed pneumonia'] , critical:false },
+
+  { id:'uti', title:'Urinary Tract Infection (UTI)', pair:'UTI ⇄ Kidney (Pyelonephritis)', summary:'Burning urination, frequency; may ascend to kidney if untreated.', symptoms:['burning urination','frequency','lower abdominal pain','fever','blood in urine'], confirm_criteria:['burning urination','frequency'], treatment:'Antibiotics as per clinician.', immediate_care:'High fever, flank pain—urgent (kidney involvement).', temp_meds:['Paracetamol','Increase fluids'], consequences_if_misdiagnosed:['Progression to kidney infection, sepsis'], critical:true },
+  { id:'pyelo', title:'Kidney Infection (Pyelonephritis)', pair:'Pyelonephritis ⇄ UTI', summary:'More severe urinary infection with high fever and flank pain.', symptoms:['high fever','flank pain','nausea','vomiting','burning urination'], confirm_criteria:['flank pain','high fever'], treatment:'Hospital antibiotics and fluids.', immediate_care:'High fever or vomiting — urgent.', temp_meds:['Paracetamol','ORS'], consequences_if_misdiagnosed:['Sepsis or kidney damage'], critical:true },
+
+  { id:'hepatitis', title:'Viral Hepatitis', pair:'Hepatitis ⇄ Gastritis/Indigestion', summary:'Liver inflammation causing jaundice, fatigue, abdominal pain.', symptoms:['jaundice','dark urine','abdominal pain','fatigue','loss of appetite'], confirm_criteria:['jaundice','dark urine'], treatment:'Supportive care; antivirals for some types.', immediate_care:'Severe jaundice or bleeding — urgent.', temp_meds:['Rest, fluids'], consequences_if_misdiagnosed:['Progression to liver failure in severe types'], critical:true },
+  { id:'gastritis', title:'Gastritis/Indigestion', pair:'Gastritis ⇄ Hepatitis', summary:'Stomach lining irritation causing upper abdominal pain, nausea.', symptoms:['upper abdominal pain','nausea','heartburn','loss of appetite'], confirm_criteria:['upper abdominal pain','heartburn'], treatment:'Diet change, antacids, PPI if needed.', immediate_care:'Severe vomiting/bleeding — urgent.', temp_meds:['Antacid','Paracetamol'], consequences_if_misdiagnosed:['Missing liver disease signs'], critical:false },
+
+  { id:'stroke', title:'Stroke', pair:'Stroke ⇄ Seizure / Migraine', summary:'Sudden focal weakness, speech trouble, vision changes.', symptoms:['sudden weakness','slurred speech','facial droop','sudden vision loss'], confirm_criteria:['sudden weakness','slurred speech'], treatment:'Time-sensitive reperfusion for ischemic stroke.', immediate_care:'Call emergency immediately (FAST signs).', temp_meds:['None — emergency care required'], consequences_if_misdiagnosed:['Lost treatment window → permanent disability'], critical:true },
+  { id:'seizure', title:'Seizure (Epileptic Event)', pair:'Seizure ⇄ Syncope / Stroke', summary:'Sudden jerking movements, loss of awareness; post-ictal confusion.', symptoms:['jerking movements','loss of consciousness','tongue bite','confusion after episode'], confirm_criteria:['jerking movements','loss of consciousness'], treatment:'Anticonvulsants per neurologist.', immediate_care:'Prolonged seizure (>5 min) — emergency.', temp_meds:['None for acute — emergency care'], consequences_if_misdiagnosed:['Prolonged seizure risk; missing status epilepticus'], critical:true },
+
+  { id:'depression', title:'Major Depression', pair:'Depression ⇄ Normal Sadness', summary:'Persistent low mood, loss of interest, sleep/appetite changes.', symptoms:['persistent low mood','loss of interest','sleep change','appetite change','worthlessness'], confirm_criteria:['persistent low mood','loss of interest'], treatment:'Psychotherapy and antidepressants as needed.', immediate_care:'Suicidal thoughts — seek help immediately.', temp_meds:['Support lines, counseling'], consequences_if_misdiagnosed:['Worsening symptoms; suicide risk'], critical:true },
+  { id:'sadness', title:'Normal Sadness / Grief', pair:'Sadness ⇄ Depression', summary:'Temporary emotional response to events that improves over time.', symptoms:['tearfulness','temporary low mood','improves with support'], confirm_criteria:['improves with time'], treatment:'Support and social connection.', immediate_care:'If suicidal risk—urgent.', temp_meds:['Counseling'], consequences_if_misdiagnosed:['Missing clinical depression'], critical:false },
+
+  { id:'allergy', title:'Allergic Rhinitis', pair:'Allergy ⇄ Common Cold', summary:'Itchy eyes, sneezing, watery nose triggered by allergens.', symptoms:['sneezing','itchy watery eyes','runny nose','triggered by exposure'], confirm_criteria:['itchy watery eyes','triggered by exposure'], treatment:'Antihistamines, nasal steroids, trigger avoidance.', immediate_care:'Severe breathing difficulty (anaphylaxis) — emergency.', temp_meds:['Cetirizine, loratadine (OTC)'], consequences_if_misdiagnosed:['Incorrect antibiotics or missed anaphylaxis risk'], critical:true },
+
+  { id:'anemia', title:'Iron Deficiency Anemia', pair:'Anemia ⇄ Fatigue/Depression', summary:'Pallor, fatigue, breathlessness on exertion due to low hemoglobin.', symptoms:['fatigue','pallor','shortness of breath on exertion','dizziness'], confirm_criteria:['pallor','fatigue'], treatment:'Iron supplements per clinician and investigate cause.', immediate_care:'Severe dizziness or syncope — seek care.', temp_meds:['Oral iron supplements if prescribed'], consequences_if_misdiagnosed:['Persistent fatigue; untreated severe anemia complications'], critical:true },
+
+  { id:'hypogly', title:'Hypoglycemia (Low Blood Sugar)', pair:'Hypoglycemia ⇄ Anxiety / Panic', summary:'Shakiness, sweating, confusion due to low blood sugar.', symptoms:['sweating','shakiness','confusion','hunger','palpitations'], confirm_criteria:['sweating','shakiness','low measured glucose'], treatment:'Fast-acting carbs (juice/glucose) and follow-up.', immediate_care:'Severe confusion or unconsciousness—emergency.', temp_meds:['Glucose gel/juice'], consequences_if_misdiagnosed:['Seizure, unconsciousness from untreated low sugar'], critical:true },
+  { id:'hyperthy', title:'Hyperthyroidism', pair:'Hyperthyroid ⇄ Anxiety', summary:'Weight loss, palpitations, heat intolerance, tremors.', symptoms:['weight loss','palpitations','heat intolerance','tremors','anxiety'], confirm_criteria:['palpitations','weight loss'], treatment:'Anti-thyroid meds, beta blockers per clinician.', immediate_care:'Severe palpitations or thyroid storm — emergency.', temp_meds:['Beta-blocker only if prescribed'], consequences_if_misdiagnosed:['Missed cardiac symptoms'], critical:true },
+
+  { id:'migraine_second', title:'Cluster Headache', pair:'Cluster ⇄ Migraine', summary:'Severe unilateral periorbital pain with tearing and redness, short-lived.', symptoms:['severe one-sided periorbital pain','tearing','red eye','restlessness'], confirm_criteria:['severe one-sided periorbital pain'], treatment:'Oxygen therapy, triptans per clinician.', immediate_care:'Severe pain—seek clinician advice.', temp_meds:['Triptans (per clinician)'], consequences_if_misdiagnosed:['Inadequate pain control'], critical:false },
+
+  { id:'chickenpox', title:'Chickenpox', pair:'Chickenpox ⇄ Measles', summary:'Vesicular rash with fever, itchy lesions.', symptoms:['fever','vesicular rash','itchy lesions','recent exposure'], confirm_criteria:['vesicular rash'], treatment:'Calamine, antihistamines, supportive care.', immediate_care:'Severe illness in adults—see clinician.', temp_meds:['Antihistamine for itch','Paracetamol'], consequences_if_misdiagnosed:['Risk to pregnant women or immunocompromised'], critical:true },
+  { id:'measles', title:'Measles', pair:'Measles ⇄ Chickenpox', summary:'Fever, cough, conjunctivitis, Koplik spots then rash.', symptoms:['fever','cough','conjunctivitis','maculopapular rash'], confirm_criteria:['conjunctivitis','rash'], treatment:'Supportive care and vitamin A in some cases.', immediate_care:'Severe complications—urgent.', temp_meds:['Paracetamol'], consequences_if_misdiagnosed:['Missed public health measures; spread'], critical:true },
+
+  { id:'skin_allergy', title:'Contact Dermatitis (Allergic Rash)', pair:'Contact Dermatitis ⇄ Fungal Infection', summary:'Itchy red rash following contact with irritant/allergen.', symptoms:['localized rash','itching','recent contact with product'], confirm_criteria:['localized rash','recent contact'], treatment:'Topical steroids, avoid trigger.', immediate_care:'If spreading rapidly—see clinician.', temp_meds:['Topical emollients','Antihistamines'], consequences_if_misdiagnosed:['Wrong antifungal use; delay in avoiding trigger'], critical:false },
+  { id:'fungal', title:'Fungal Skin Infection', pair:'Fungal ⇄ Contact Dermatitis', summary:'Ring-shaped rash, scaling, often in moist areas.', symptoms:['ring-shaped rash','scaling','itching','moist area involvement'], confirm_criteria:['ring-shaped rash'], treatment:'Topical antifungals.', immediate_care:'If severe spreading — clinician visit.', temp_meds:['Topical antifungals (OTC)'], consequences_if_misdiagnosed:['Ineffective steroid treatment can worsen fungal infection'], critical:false },
+
+  { id:'migraine_third', title:'Temporomandibular Pain (TMJ)', pair:'TMJ ⇄ Migraine/Toothache', summary:'Jaw pain, clicking, worsens with chewing.', symptoms:['jaw pain','clicking sound','pain with chewing','facial pain'], confirm_criteria:['jaw pain','clicking'], treatment:'Dental/physio care, mouthguard.', immediate_care:'Severe inability to open—see dentist.', temp_meds:['NSAIDs if appropriate'], consequences_if_misdiagnosed:['Unnecessary neurological meds'], critical:false },
+
+  { id:'ear_infection', title:'Otitis Media (Ear Infection)', pair:'Ear Infection ⇄ Toothache', summary:'Ear pain, fever, hearing reduction.', symptoms:['ear pain','fever','reduced hearing','tugging at ear (children)'], confirm_criteria:['ear pain','fever'], treatment:'Analgesics; antibiotics if bacterial per clinician.', immediate_care:'High fever or severe pain—see clinician.', temp_meds:['Paracetamol','Ear drops per clinician'], consequences_if_misdiagnosed:['Hearing loss if prolonged'], critical:false },
+
+  { id:'conjunctivitis', title:'Conjunctivitis (Pink Eye)', pair:'Conjunctivitis ⇄ Allergic Eye Irritation', summary:'Red, watery or purulent eye discharge and irritation.', symptoms:['red eye','watery discharge','itching','sticky eyelids'], confirm_criteria:['eye redness','discharge'], treatment:'Depends on cause—antibiotics for bacterial, antihistamine for allergic.', immediate_care:'If vision changes—urgent.', temp_meds:['Lubricant eye drops'], consequences_if_misdiagnosed:['Spread of infection or delayed proper therapy'], critical:false },
+  { id:'glaucoma', title:'Acute Angle Closure Glaucoma', pair:'Glaucoma ⇄ Migraine / Eye Pain', summary:'Severe eye pain, blurred vision, nausea, high eye pressure.', symptoms:['severe eye pain','blurred vision','nausea','halos around lights'], confirm_criteria:['severe eye pain','blurred vision'], treatment:'Immediate ophthalmology intervention to lower eye pressure.', immediate_care:'Immediate emergency ophthalmology required.', temp_meds:['None — emergency care'], consequences_if_misdiagnosed:['Permanent vision loss'], critical:true }
+];
+
+/* ---------- UI Render ---------- */
+const grid = document.getElementById('grid');
+const search = document.getElementById('search');
+const clearBtn = document.getElementById('clear');
+const showAllBtn = document.getElementById('showAll');
+
+function renderGrid(filter=''){
+  grid.innerHTML = '';
+  const list = diseases.filter(d => (d.title + ' ' + d.pair).toLowerCase().includes(filter.toLowerCase()));
+  list.forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'card';
+    el.tabIndex = 0;
+    el.innerHTML = `<h3>${d.title}</h3><p>${d.pair}</p><p class="small">${d.summary}</p>`;
+    el.onclick = ()=> openModal(d.id);
+    el.onkeypress = (e)=> { if(e.key === 'Enter') openModal(d.id) };
+    grid.appendChild(el);
+  });
+  if(list.length === 0) grid.innerHTML = '<div class="muted-small">No diseases match that search.</div>';
+}
+renderGrid();
+
+search.addEventListener('input', (e)=> renderGrid(e.target.value));
+clearBtn.addEventListener('click', ()=> { search.value=''; renderGrid(); });
+showAllBtn.addEventListener('click', ()=> { search.value=''; renderGrid(); });
+
+/* ---------- Modal & Interaction ---------- */
+const modal = document.getElementById('modal');
+const modalTitle = document.getElementById('modalTitle');
+const modalPair = document.getElementById('modalPair');
+const modalSummary = document.getElementById('modalSummary');
+const symGrid = document.getElementById('symGrid');
+const analyzeBtn = document.getElementById('analyzeBtn');
+const resetBtn = document.getElementById('resetBtn');
+const closeBtn = document.getElementById('closeBtn');
+
+const infoBox = document.getElementById('infoBox');
+const confirmBox = document.getElementById('confirmBox');
+const immediateBox = document.getElementById('immediateBox');
+const tempMedBox = document.getElementById('tempMedBox');
+const conseqBox = document.getElementById('conseqBox');
+const analysisArea = document.getElementById('analysisArea');
+
+let current = null;
+
+function openModal(id){
+  current = diseases.find(x => x.id === id);
+  if(!current) return;
+  modalTitle.textContent = `You guessed: ${current.title}`;
+  modalPair.textContent = current.pair;
+  modalSummary.textContent = current.summary;
+
+  // Build symptom options: union of current + some others for discrimination
+  const otherSet = new Set();
+  diseases.forEach(d => { if(d.id !== current.id) d.symptoms.forEach(s=>otherSet.add(s)); });
+  const extras = Array.from(otherSet).filter(s => !current.symptoms.includes(s)).slice(0,6);
+  const options = Array.from(new Set([...current.symptoms, ...extras]));
+
+  symGrid.innerHTML = '';
+  options.forEach(s => {
+    const lab = document.createElement('label');
+    lab.className = 'sym';
+    const idc = 's_' + cssSafe(s);
+    lab.innerHTML = `<input type="checkbox" value="${s}" id="${idc}"> <div>${capitalize(s)}</div>`;
+    symGrid.appendChild(lab);
+  });
+
+  // fill quick info boxes for right panel
+  infoBox.innerHTML = `<div><strong>Summary:</strong> ${escapeHtml(current.summary)}</div>`;
+  confirmBox.textContent = current.confirm_criteria && current.confirm_criteria.length ? current.confirm_criteria.map(capitalize).join(', ') : 'Clinical tests may be needed.';
+  immediateBox.textContent = current.immediate_care || 'Seek clinician for severe symptoms.';
+  tempMedBox.innerHTML = current.temp_meds && current.temp_meds.length ? current.temp_meds.map(m => escapeHtml(m)).join(', ') : 'No OTC suggestions; see clinician.';
+  conseqBox.innerHTML = current.consequences_if_misdiagnosed && current.consequences_if_misdiagnosed.length ? current.consequences_if_misdiagnosed.map(c => escapeHtml(c)).join('<br>') : 'May delay proper care.';
+
+  analysisArea.innerHTML = '';
+  modal.classList.add('open');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+closeBtn.addEventListener('click', ()=> { modal.classList.remove('open'); current = null; });
+resetBtn.addEventListener('click', ()=> {
+  document.querySelectorAll('#symGrid input').forEach(i => i.checked = false);
+  analysisArea.innerHTML = '';
+});
+
+analyzeBtn.addEventListener('click', ()=> {
+  if(!current) return;
+  const selected = Array.from(document.querySelectorAll('#symGrid input:checked')).map(i=>i.value);
+  if(selected.length === 0){ alert('Please select at least one symptom.'); return; }
+
+  // Score across diseases
+  const scores = diseases.map(d => {
+    const matchCount = d.symptoms.filter(s => selected.includes(s)).length;
+    const score = matchCount / Math.max(1, d.symptoms.length);
+    return { id: d.id, title:d.title, matchCount, score, details:d };
+  });
+  const sorted = scores.filter(s => s.matchCount>0).sort((a,b)=> b.score - a.score);
+  const top = sorted[0];
+
+  // Build analysis UI
+  analysisArea.innerHTML = '';
+  const guessedBox = document.createElement('div');
+  guessedBox.className = 'result-box';
+  guessedBox.innerHTML = `<div style="font-weight:700">Your guess:</div>
+    <div class="small" style="margin-top:6px">${current.title}<br><em>Selected symptoms:</em> ${selected.map(capitalize).join(', ')}</div>`;
+  analysisArea.appendChild(guessedBox);
+
+  if(!top){
+    analysisArea.innerHTML += `<div class="small" style="margin-top:10px">No close matches found for the selected symptoms. Consult a clinician for evaluation.</div>`;
+    return;
+  }
+
+  const predicted = top.details;
+  const matchPercent = Math.round(top.score*100);
+
+  // Correct or mistaken
+  const status = document.createElement('div');
+  status.style.marginTop='10px';
+  if(predicted.id === current.id){
+    status.innerHTML = `<div style="background:linear-gradient(90deg,#ecfff2,#f6fff9);border:1px solid #d7ffe6;padding:10px;border-radius:8px;font-weight:700;color:#056839">✅ Your assumption matches the symptoms. Please consult a doctor to confirm as (${predicted.title}).</div>`;
+  } else {
+    status.innerHTML = `<div style="background:linear-gradient(90deg,#fff9f9,#fff6f6);border:1px solid #ffd6d6;padding:10px;border-radius:8px;font-weight:700;color:#8a1212">⚠️ Notice — you guessed <strong>${current.title}</strong>, but symptoms more strongly match <strong>${predicted.title}</strong> (${matchPercent}% overlap).</div>`;
+  }
+  analysisArea.appendChild(status);
+
+  // Show predicted summary + top 2 others
+  const topDiv = document.createElement('div');
+  topDiv.style.marginTop='12px';
+  topDiv.innerHTML = `<div style="font-weight:700">Predicted (most likely):</div>
+    <div class="small" style="margin-top:6px"><strong>${predicted.title}</strong> — ${predicted.summary}<br><em>Match:</em> ${top.matchCount}/${predicted.symptoms.length} (${matchPercent}%)</div>`;
+  analysisArea.appendChild(topDiv);
+
+  const others = sorted.slice(1,3);
+  if(others.length){
+    const otherBox = document.createElement('div');
+    otherBox.style.marginTop='10px';
+    otherBox.innerHTML = `<div style="font-weight:700">Also consider:</div>`;
+    const ul = document.createElement('ul');
+    ul.className='small';
+    others.forEach(o => {
+      ul.innerHTML += `<li><strong>${o.title}</strong> — match ${o.matchCount}/${o.details.symptoms.length} (${Math.round(o.score*100)}%) — ${o.details.summary}</li>`;
+    });
+    otherBox.appendChild(ul);
+    analysisArea.appendChild(otherBox);
+  }
+
+  // Confirmation criteria check
+  const confirmCriteria = predicted.confirm_criteria || [];
+  const missing = confirmCriteria.filter(c => !selected.includes(c));
+  const confirmDiv = document.createElement('div');
+  confirmDiv.style.marginTop='12px';
+  if(confirmCriteria.length === 0){
+    confirmDiv.innerHTML = `<div class="small">Confirmation typically requires clinician tests. Selected symptoms: ${selected.map(capitalize).join(', ')}</div>`;
+  } else if(missing.length === 0){
+    confirmDiv.innerHTML = `<div style="background:#ecfffb;border:1px solid #c7fff0;padding:10px;border-radius:8px;font-weight:700;color:#056839">Confirmable now: You have selected the key confirming symptom(s) for <strong>${predicted.title}</strong>. Consult a clinician for definitive tests.</div>`;
+  } else {
+    confirmDiv.innerHTML = `<div class="small">To confirm <strong>${predicted.title}</strong>, look for: ${confirmCriteria.map(capitalize).join(', ')}. You selected: ${selected.map(capitalize).join(', ')}. Missing confirming symptom(s): ${missing.map(capitalize).join(', ')}. If these appear, seek clinician evaluation.</div>`;
+  }
+  analysisArea.appendChild(confirmDiv);
+
+  // Details: treatment, immediate care, temp meds, consequences
+  const details = document.createElement('div');
+  details.style.marginTop='12px';
+  details.innerHTML = `<div style="font-weight:700">Details for ${predicted.title}</div>
+    <div class="small" style="margin-top:8px"><strong>Treatment:</strong> ${escapeHtml(predicted.treatment || 'See clinician.')}</div>
+    <div class="small" style="margin-top:6px"><strong>Immediate care:</strong> ${escapeHtml(predicted.immediate_care || 'Seek clinician.')}</div>
+    <div class="small" style="margin-top:6px"><strong>Temporary / OTC suggestions:</strong> ${predicted.temp_meds && predicted.temp_meds.length ? predicted.temp_meds.map(m=>escapeHtml(m)).join(', ') : 'None (see clinician)'}</div>
+    <div class="small" style="margin-top:6px"><strong>Consequences if mistaken:</strong> ${predicted.consequences_if_misdiagnosed && predicted.consequences_if_misdiagnosed.length ? predicted.consequences_if_misdiagnosed.map(c=>escapeHtml(c)).join('; ') : 'May delay proper care.'}</div>`;
+  analysisArea.appendChild(details);
+
+  // If predicted is critical -> show big blinking red warning
+  if(predicted.critical){
+    const warn = document.createElement('div');
+    warn.className = 'warning';
+    warn.innerHTML = `⚠️ <strong>CRITICAL:</strong> The predicted condition (<em>${predicted.title}</em>) can be life-threatening. Seek emergency medical attention immediately.`;
+    analysisArea.appendChild(warn);
+  }
+
+  // If user's guess differs, show why mistaking matters
+  if(predicted.id !== current.id){
+    const mix = document.createElement('div');
+    mix.style.marginTop='12px';
+    mix.innerHTML = `<div style="border-top:1px dashed #eef6ff;padding-top:12px">
+      <div style="font-weight:700">Why mistaking <em>${current.title}</em> for <em>${predicted.title}</em> matters</div>
+      <div class="small" style="margin-top:6px">${escapeHtml(current.summary)}<br>${escapeHtml(predicted.summary)}</div>
+      <div class="small" style="margin-top:6px"><strong>Risk:</strong> ${predicted.consequences_if_misdiagnosed && predicted.consequences_if_misdiagnosed.length ? predicted.consequences_if_misdiagnosed.map(c=>escapeHtml(c)).join('; ') : 'Risk of incorrect or delayed treatment.'}</div>
+    </div>`;
+    analysisArea.appendChild(mix);
+  }
+
+  // Final note
+  const final = document.createElement('div');
+  final.style.marginTop='12px';
+  final.innerHTML = `<div style="background:#fffaf8;padding:10px;border-radius:8px;border:1px solid #ffeedd;color:#5f2d00;font-weight:700">Note: This prediction is educational and based on symptom overlap only. Only a qualified clinician and (if needed) diagnostic tests can confirm diagnosis.</div>`;
+  analysisArea.appendChild(final);
+
+  // Scroll to analysis
+  analysisArea.scrollIntoView({behavior:'smooth'});
+});
+function predictDisease() {
+  const selected = Array.from(document.querySelectorAll('#symptomForm input:checked')).map(cb => cb.value);
+  let result = `<div class="result">`;
+
+  if (selected.length === currentDisease.symptoms.length) {
+    result += `✅ Your assumption of <b>${currentDisease.guess}</b> matches the entered symptoms.<br>`;
+    result += `<i>Note: This tool is for awareness only. Please confirm with a doctor for accurate diagnosis.</i><br>`;
+  } else {
+    result += `⚠️ Your assumption was <b>${currentDisease.guess}</b>, but symptoms suggest <b>${currentDisease.actual}</b>.<br>`;
+    result += `<i>You may have confused one disease with another. Consult a healthcare provider for confirmation.</i><br>`;
+  }
+
+  result += `<b>When to confirm 100%:</b> ${currentDisease.confirm}<br>`;
+  result += `<b>Immediate Care:</b> ${currentDisease.care}<br>`;
+  result += `<b>Temporary Medicine (awareness only):</b> ${currentDisease.medicine}<br>`;
+  result += `<b>Consequence if mistaken:</b> ${currentDisease.consequence}</div>`;
+
+  if (currentDisease.critical) {
+    result += `<div class="critical">🚨 CRITICAL: Seek emergency medical care immediately!</div>`;
+  }
+
+  document.getElementById("resultBox").innerHTML = result;
+}
+
+
+/* ---------- Helpers ---------- */
+function cssSafe(s){ return s.replace(/[^a-z0-9]/gi,'_').toLowerCase(); }
+function capitalize(s){ if(!s) return ''; return s.charAt(0).toUpperCase() + s.slice(1); }
+function escapeHtml(s){ if(!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+</script>
+</body>
+</html>
